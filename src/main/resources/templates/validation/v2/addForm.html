@@ -41,8 +41,11 @@
         <div>
             <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
             <!--
-            th:errorclass 문법을 사용하므로써 th:class="${errors?.containsKey('itemName')} ? 'field-error' : _"와 같은 복잡한 로직이 필요없다.
+            1. th:errorclass 문법을 사용하므로써 th:class="${errors?.containsKey('itemName')} ? 'field-error' : _"와 같은 복잡한 로직이 필요없다.
             th:field="*{itemName}"을 이용하여 BindingResult에 itemName이라는 필드가 존재하면 errorclass가 실행된다.
+            2. th:field는 이외에도 입력한 필드가 서버에서 검사에 실패하여 addError(new FieldError(...))에 담겼을 경우에는 필드가 에러가 발생했다고 가정하고
+            FieldError의 아규먼트인, rejectedValue를 출력한다. 만약 FieldError를 생성할 때 rejectedValue를 생성했다면, rejectedValue가 출력될 것이고
+            아니라면 공백이 출력될 것이다.
             -->
             <input type="text" id="itemName" th:field="*{itemName}" th:errorclass="field-error" class="form-control" placeholder="이름을 입력하세요">
             <!--
