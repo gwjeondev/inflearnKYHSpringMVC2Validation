@@ -82,7 +82,7 @@ public class ValidationItemControllerV2 {
     }
 
     //검증 error시에도 기존 값 유지하는 v2 버전.
-    @PostMapping("/add")
+    //@PostMapping("/add")
     public String addItemV2(@ModelAttribute Item item, BindingResult bindingResult,
                             RedirectAttributes redirectAttributes, Model model) {
         //검증 로직
@@ -118,6 +118,62 @@ public class ValidationItemControllerV2 {
             if(resultPrice < 10000) {
                 //field error가 아닌 item object 자체에 대한 global 오류 임으로 objectError로 생성한다.
                 bindingResult.addError(new ObjectError("item", null, null, "가격 * 수량의 합은 10,000원 이상이여야 합니다. 현재 값 = " + resultPrice));
+            }
+        }
+
+        //검증에 실패하면 다시 입력 폼으로
+        if(bindingResult.hasErrors()) {
+            log.debug("errors = {}", bindingResult);
+            return "validation/v2/addForm";
+        }
+
+        //성공 로직
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+
+    //errors.properties를 이용한 일관성있는 에러 메시지 관리.
+    @PostMapping("/add")
+    public String addItemV3(@ModelAttribute Item item, BindingResult bindingResult,
+                            RedirectAttributes redirectAttributes, Model model) {
+        //검증 로직
+        if(!StringUtils.hasText(item.getItemName())) {
+            /*
+            rejectedValue: 사용자가 입력하여 거부당한 값, 즉 사용자 입력 값.
+            bindingFailure: 입력한 값이 바인딩 되기전에 fail이 일어났는지에 대한 boolean Check, 예로 숫자 타입인데 문자가 들어왔을경우 true.
+            숫자는 문자로 바인딩될수 없기 때문에 바인딩 되기전에 fail이 일어남.
+            */
+
+            /*codes를 String 배열로 받는 이유는 첫번째 인덱스 code가 없으면 두번째 인덱스 code를 찾는식으로 진행된다.*/
+            bindingResult.addError(new FieldError("item", "itemName", item.getItemName(),
+                    false, new String[]{"testNotValue", "required.item.itemName"}, null, "code 배열의 key가 없으면 이부분이 출력된다."));
+        }
+        if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
+            bindingResult.addError(new FieldError("item", "price", item.getPrice(),
+                    false, new String[]{"range.item.price"}, new Object[]{"1,000", "1,000,000"}, null));
+        }
+        if (item.getQuantity() == null || item.getQuantity() > 9999) {
+            bindingResult.addError(new FieldError("item", "quantity", item.getQuantity(),
+                    false, new String[]{"max.item.quantity"}, new Object[]{"9,999"}, null));
+        }
+
+        /*
+        위의 검증 외에도 만약 price에 int가 아닌 문자가 들어온다면 타입에러가 발생하는데, 스프링에서는 해당 컨트롤러 "addItemV2"를 실행하기 전에,
+        BindingResult에다가 위에 코드로 만들어진 것 처럼 addError(new FieldError(....))를 그대로 수행해준다.
+        그후 타입에러에 대한 검증이 처리된후에 스프링은 컨트롤러를 호출한다.
+        때문에 타입에러의 경우 위와 같이 코드를 작성하지 않아도 에러 메시지가 담기고, 사용자가 작성한 데이터가 그대로 유지될 수 있다.
+        bindingResult.addError(new FieldError("item", "price", "ㅁㄹㄴㅇㄹ", true, null, null, 타입 에러 메시지~~.....~));
+        */
+
+        //특정 필드가 아닌 복합 룰 검증
+        if(item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if(resultPrice < 10000) {
+                //field error가 아닌 item object 자체에 대한 global 오류 임으로 objectError로 생성한다.
+                bindingResult.addError(new ObjectError("item", new String[]{"totalPriceMin"},
+                        new Object[]{"10,000", resultPrice}, null));
             }
         }
 
