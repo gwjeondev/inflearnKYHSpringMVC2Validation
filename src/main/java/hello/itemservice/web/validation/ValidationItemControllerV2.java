@@ -192,8 +192,16 @@ public class ValidationItemControllerV2 {
         if(!StringUtils.hasText(item.getItemName())) {
             /*
             1. errorCode인 required는 메시지에 등록된 코드가 아니다. 뒤에서 설명할 messageResolver를 위한 오류코드이다.
-            2. 1번에서 설명한 내용은 추가로 학습해야 하고 여기서는, 간단하게 알아보고 넘어가자면 "required.item.itemName"을 required로 생략할 수 있다.
-            해당 key에는 규칙이 있는데 뒤의 item.~은 필수로 들어가는 고정값이며 item객체의 itemName필드 값이라는 규칙이다.*/
+            2. 스프링은 errorCode에 등록된 Code를 확인하고 errors.properties에 required가 있는지 찾는다.
+            3. 만약 required 밖에 선언되어 있지 않다면 required의 value를 가져온다.
+            4. 하지만 required.item.itemName[ex) errorCode(required).objectName.fieldName]과 같이 조금 더 상세한 key값이 있다면 해당 key값의 value를 가져온다.
+            5. 일반적으로 범용적인 required 코드를 사용하다가 조금 더 상세한 메세지가 필요 할 때에는 상세한 코드를 선언하여 사용하면 된다.
+            6. 우선순위는 상세한 code > 단순한 code라고 생각하면 쉽다.
+            7. 한마디로 V3에서 사용했던 다음과 같은 코드의 new String[]{....} 역할을 대신 해주는 것이다.
+            bindingResult.addError(new FieldError("item", "itemName", item.getItemName(),
+                    false, new String[]{"required.item.itemName", "required"}, null, null));
+            8. 위의 설명한 내용들의 기능을 지원하는것은 messageResolver를 구현하는 MessageCodesResolver이다.
+            */
             bindingResult.rejectValue("itemName", "required");
         }
         if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
