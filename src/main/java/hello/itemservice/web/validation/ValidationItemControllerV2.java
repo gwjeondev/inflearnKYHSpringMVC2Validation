@@ -10,6 +10,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.validation.ValidationUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -182,11 +183,16 @@ public class ValidationItemControllerV2 {
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult,
                             RedirectAttributes redirectAttributes, Model model) {
 
+
        /* 사실 bindingResult는 반드시 자신을 바인딩할 Object인 ModelAttribute 뒤에 위치해야 하는데,
         이는 자신을 바인딩 할 객체를 사실 알고 있다는것과 같은 의미이다. 다음과 같이 log를 출력해보면 item 객체를 가르킨다는것을 알 수 있다.
         따라서 아래의 rejectValue를 통한 검증시 target object인 item에 대한 명시는 new FieldError()에서 사용했던것과 다르게 명시할 필요가 없다. */
         log.info("objectName = {}", bindingResult.getObjectName());
         log.info("target = {}", bindingResult.getTarget());
+
+
+        //아래 검증로직을 다음과 같이 한줄로 줄일 수 있다. if문을 통하여 값이 있나 없나 검증하지 않고 단순히 empty인지 공백인지에 대해 간단히 처리할 때 유용하다.
+        //ValidationUtils.rejectIfEmptyOrWhitespace(bindingResult, "itemName", "required");
 
         //검증 로직
         if(!StringUtils.hasText(item.getItemName())) {
