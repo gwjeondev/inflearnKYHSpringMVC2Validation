@@ -49,13 +49,16 @@ public class ValidationItemControllerV2 {
     //@PostMapping("/add")
     public String addItemV1(@ModelAttribute Item item, BindingResult bindingResult,
                           RedirectAttributes redirectAttributes, Model model) {
+
         //검증 로직
         if(!StringUtils.hasText(item.getItemName())) {
             bindingResult.addError(new FieldError("item", "itemName", "상품 이름은 필수입니다."));
         }
+
         if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
             bindingResult.addError(new FieldError("item", "price", "가격은 1,000 ~ 1,000,000 까지 허용합니다."));
         }
+
         if (item.getQuantity() == null || item.getQuantity() > 9999) {
             bindingResult.addError(new FieldError("item", "quantity", "수량은 최대 9,999 까지 허용합니다."));
         }
@@ -183,6 +186,18 @@ public class ValidationItemControllerV2 {
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult,
                             RedirectAttributes redirectAttributes, Model model) {
 
+        /*
+        bindingResult에 rejectValue 하기전 Errors가 존재 한다는 것은 타입에러이므로 그냥 바로 return 처리한다.
+        이렇게 하면
+        예를들어 타입에러인경우 object의 변수에는(여기서는 item의 price라고 가정) 당연히 null이 들어가 있을 것이고,
+        그렇데 된다면 밑의 검증 로직에서도 에러 메시지가 추가 되기 때문에 한 field에 대해 2개의 에러메시지가 생길 수 있는데
+        이를 방지 할 수 있다.
+        이렇게 처리하는 경우도 많다고 한다.
+        */
+        if(bindingResult.hasErrors()) {
+            log.debug("errors = {}", bindingResult);
+            return "validation/v2/addForm";
+        }
 
        /* 사실 bindingResult는 반드시 자신을 바인딩할 Object인 ModelAttribute 뒤에 위치해야 하는데,
         이는 자신을 바인딩 할 객체를 사실 알고 있다는것과 같은 의미이다. 다음과 같이 log를 출력해보면 item 객체를 가르킨다는것을 알 수 있다.
@@ -217,6 +232,18 @@ public class ValidationItemControllerV2 {
             */
             bindingResult.rejectValue("itemName", "required");
         }
+
+        /*
+        만약 타입 에러시 스프링이 컨트롤러를 호출하기전에 자동으로 BindingResult에다가 타입에러에 관한 rejectValue를 싣는데,
+        이때 errorCode는 "typeMismatch"가 default로 삽입되며,
+        level1: typeMismatch.item.price
+        level2: typeMismatch.price
+        level3: typeMismatch.java.lang.Integer
+        level4: typeMismatch
+        가 errorCode로 타임리프에 전달된다. 하지만 이때 위의 level1부터 level4까지 errors.properties에 저장 되어 있지 않으니
+        타임리프에서는 스프링이 삽입해준 defaultMessage를 출력하게 되는것이다. 이런 메시지는 개발자나 알아먹을수 있지
+        사용자에게는 불쾌한 에러 메시지로, 이에 대한 error 메시지에 대해서도 따로 정의를 해두고 사용하도록 하자.
+        */
         if(item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
             bindingResult.rejectValue("price", "range", new Object[]{"1,000", "1,000,000"}, null);
         }
