@@ -24,7 +24,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ValidationItemControllerV2 {
 
+    //생성자가 1개이면 @Autowired가 생략가능하며, Lombok의 RequiredArgsConstrctor가 생성자를 자동으로 생성해준다.
     private final ItemRepository itemRepository;
+    private final ItemValidator itemValidator;
 
     @GetMapping
     public String items(Model model) {
@@ -182,7 +184,7 @@ public class ValidationItemControllerV2 {
     }
 
     //rejectValue(), reject()를 이용한 new ObjectError(), new FieldError()가 했던 일을 그대로 단순화하며 코드를 줄일수 있다.
-    @PostMapping("/add")
+    //@PostMapping("/add")
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult,
                             RedirectAttributes redirectAttributes, Model model) {
 
@@ -202,8 +204,8 @@ public class ValidationItemControllerV2 {
        /* 사실 bindingResult는 반드시 자신을 바인딩할 Object인 ModelAttribute 뒤에 위치해야 하는데,
         이는 자신을 바인딩 할 객체를 사실 알고 있다는것과 같은 의미이다. 다음과 같이 log를 출력해보면 item 객체를 가르킨다는것을 알 수 있다.
         따라서 아래의 rejectValue를 통한 검증시 target object인 item에 대한 명시는 new FieldError()에서 사용했던것과 다르게 명시할 필요가 없다. */
-        log.info("objectName = {}", bindingResult.getObjectName());
-        log.info("target = {}", bindingResult.getTarget());
+        log.info("objectName = {}", bindingResult.getObjectName()); // --> objectName = item
+        log.info("target = {}", bindingResult.getTarget()); // --> target = Item(id=null, itemName=2, price=33, quantity=1)
 
 
         //아래 검증로직을 다음과 같이 한줄로 줄일 수 있다. if문을 통하여 값이 있나 없나 검증하지 않고 단순히 empty인지 공백인지에 대해 간단히 처리할 때 유용하다.
@@ -257,6 +259,33 @@ public class ValidationItemControllerV2 {
             if(resultPrice < 10000) {
                 bindingResult.reject("totalPriceMin", new Object[]{"10,000", resultPrice}, null);
             }
+        }
+
+        //검증에 실패하면 다시 입력 폼으로
+        if(bindingResult.hasErrors()) {
+            log.debug("errors = {}", bindingResult);
+            return "validation/v2/addForm";
+        }
+
+        //성공 로직
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v2/items/{itemId}";
+    }
+
+    //validation 검증을 class를 만들어 따로 분리한다.
+    @PostMapping("/add")
+    public String addItemV5(@ModelAttribute Item item, BindingResult bindingResult,
+                            RedirectAttributes redirectAttributes, Model model) {
+
+        if(bindingResult.hasErrors()) {
+            log.debug("errors = {}", bindingResult);
+            return "validation/v2/addForm";
+        }
+
+        if(itemValidator.supports(Item.class)) {
+            itemValidator.validate(item, bindingResult);
         }
 
         //검증에 실패하면 다시 입력 폼으로
