@@ -30,8 +30,15 @@ public class ValidationItemControllerV2 {
     private final ItemRepository itemRepository;
     private final ItemValidator itemValidator;
 
+
+    //@InitBinder는 이 컨트롤러가 호출될 때마다 동작한다.
     @InitBinder
     public void init(WebDataBinder dataBinder) {
+/*        spring에서 parameter를 객체에 넣어주고, 기타 검증과 관련된 일을 처리하는, spring 자체적으로 사용하는 WebDataBinder 객체이다.
+        WebDataBinder는 컨트롤러 호출될 때 마다 항상 새로이 만들어지며, 해당 부분에서는 검증을 등록하기 위하여 직접 꺼내서 사용한다.*/
+
+/*        만약 add된 validatator가 여러개일 경우 처리되는 방식은
+        validator 객체의 supports 메서드를 통해 true값인 경우만 validated하도록 spring이 동작한다.*/
         dataBinder.addValidators(itemValidator);
     }
 
@@ -57,7 +64,7 @@ public class ValidationItemControllerV2 {
 
     //@PostMapping("/add")
     public String addItemV1(@ModelAttribute Item item, BindingResult bindingResult,
-                          RedirectAttributes redirectAttributes, Model model) {
+                          RedirectAttributes redirectAttributes) {
 
         //검증 로직
         if(!StringUtils.hasText(item.getItemName())) {
@@ -97,7 +104,7 @@ public class ValidationItemControllerV2 {
     //검증 error시에도 기존 값 유지하는 v2 버전.
     //@PostMapping("/add")
     public String addItemV2(@ModelAttribute Item item, BindingResult bindingResult,
-                            RedirectAttributes redirectAttributes, Model model) {
+                            RedirectAttributes redirectAttributes) {
         //검증 로직
         if(!StringUtils.hasText(item.getItemName())) {
             /*
@@ -150,7 +157,7 @@ public class ValidationItemControllerV2 {
     //errors.properties를 이용한 일관성있는 에러 메시지 관리.
     //@PostMapping("/add")
     public String addItemV3(@ModelAttribute Item item, BindingResult bindingResult,
-                            RedirectAttributes redirectAttributes, Model model) {
+                            RedirectAttributes redirectAttributes) {
 
         //검증 로직
         if(!StringUtils.hasText(item.getItemName())) {
@@ -193,7 +200,7 @@ public class ValidationItemControllerV2 {
     //rejectValue(), reject()를 이용한 new ObjectError(), new FieldError()가 했던 일을 그대로 단순화하며 코드를 줄일수 있다.
     //@PostMapping("/add")
     public String addItemV4(@ModelAttribute Item item, BindingResult bindingResult,
-                            RedirectAttributes redirectAttributes, Model model) {
+                            RedirectAttributes redirectAttributes) {
 
         /*
         bindingResult에 rejectValue 하기전 Errors가 존재 한다는 것은 타입에러이므로 그냥 바로 return 처리한다.
@@ -284,7 +291,7 @@ public class ValidationItemControllerV2 {
     //validation 검증을 class를 만들어 따로 분리한다.
     //@PostMapping("/add")
     public String addItemV5(@ModelAttribute Item item, BindingResult bindingResult,
-                            RedirectAttributes redirectAttributes, Model model) {
+                            RedirectAttributes redirectAttributes) {
 
         if(bindingResult.hasErrors()) {
             log.debug("errors = {}", bindingResult);
@@ -308,9 +315,10 @@ public class ValidationItemControllerV2 {
         return "redirect:/validation/v2/items/{itemId}";
     }
 
+    //최상단에서 WebDataBinder에 validator를 등록했으므로 Item 객체의 앞에 애노테이션 @Validated를 붙여주면 항상 validator가 동작한다.
     @PostMapping("/add")
     public String addItemV6(@Validated @ModelAttribute Item item, BindingResult bindingResult,
-                            RedirectAttributes redirectAttributes, Model model) {
+                            RedirectAttributes redirectAttributes) {
 
         //검증에 실패하면 다시 입력 폼으로
         if(bindingResult.hasErrors()) {
