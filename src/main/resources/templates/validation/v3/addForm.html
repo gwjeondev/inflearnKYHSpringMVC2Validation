@@ -1,0 +1,88 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <link th:href="@{/css/bootstrap.min.css}"
+          href="../css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 560px;
+        }
+
+        .field-error {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+
+        div.field-error {
+            font-size: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="py-5 text-center">
+        <h2 th:text="#{page.addItem}">상품 등록</h2>
+    </div>
+
+
+
+
+    <form action="item.html" th:action th:object="${item}" method="post">
+        <!--
+        1. 스프링에서 제공하는 BindingResult를 사용하기 위해서는 #fields라는 문법을 사용한다.
+        2. hasGlobalErrors()는 new ObjectError()가 있는지 확인한다.
+        3. globalErrors는 현재는 1개를 가지지만 여러개를 가질수 있다. th:each를 이용해 반복한다.
+        -->
+        <div th:if="${#fields.hasGlobalErrors()}" class="field-error"
+             th:each="err : ${#fields.globalErrors()}" th:text="${err}">글로벌 오류 메시지</div>
+        <div>
+            <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
+            <!--
+            1. th:errorclass 문법을 사용하므로써 th:class="${errors?.containsKey('itemName')} ? 'field-error' : _"와 같은 복잡한 로직이 필요없다.
+            th:field="*{itemName}"을 이용하여 BindingResult에 itemName이라는 필드가 존재하면 errorclass가 실행된다.
+            2. th:field는 이외에도 입력한 필드가 서버에서 검사에 실패하여 addError(new FieldError(...))에 담겼을 경우에는 필드가 에러가 발생했다고 가정하고
+            FieldError의 아규먼트인, rejectedValue를 출력한다. 만약 FieldError를 생성할 때 rejectedValue를 생성했다면, rejectedValue가 출력될 것이고
+            아니라면 공백이 출력될 것이다.
+            -->
+            <input type="text" id="itemName" th:field="*{itemName}" th:errorclass="field-error" class="form-control" placeholder="이름을 입력하세요">
+            <!--
+            th:errros 문법에서는 spring에서 BindingResult에 Field 이름을 new FieldError("...", "itemName", "....") 이라고 지정 하였으므로 *{필드이름}을 사용할 수 있다.
+            이 문법을 사용하므로써 th:if와 같은 어쩌구저쩌구
+            <div class="field-error" th:if="${errors?.containsKey('itemName')}" th:text="${errors['itemName']}">가격 오류</div>
+            같이 복잡한 로직이 th:errors 하나의 문법으로 모두 해결된다.
+            -->
+            <div class="field-error" th:errors="*{itemName}">상품명 오류</div>
+        </div>
+        <div>
+            <label for="price" th:text="#{label.item.price}">가격</label>
+            <input type="text" id="price" th:field="*{price}" th:errorclass="field-error" class="form-control" placeholder="가격을 입력하세요">
+            <div class="field-error" th:errors="*{price}">가격 오류</div>
+        </div>
+        <div>
+            <label for="quantity" th:text="#{label.item.quantity}">수량</label>
+            <input type="text" id="quantity" th:field="*{quantity}" th:errorclass="field-error" class="form-control" placeholder="수량을 입력하세요">
+            <div class="field-error" th:errors="*{quantity}">수량 오류</div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row">
+            <div class="col">
+                <button class="w-100 btn btn-primary btn-lg" type="submit" th:text="#{button.save}">상품 등록</button>
+            </div>
+            <div class="col">
+                <button class="w-100 btn btn-secondary btn-lg"
+                        onclick="location.href='items.html'"
+                        th:onclick="|location.href='@{/validation/v3/items}'|"
+                        type="button" th:text="#{button.cancel}">취소</button>
+            </div>
+        </div>
+
+    </form>
+
+</div> <!-- /container -->
+</body>
+</html>
