@@ -76,6 +76,14 @@ public class ValidationItemControllerV3 {
     @PostMapping("/add")
     public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult,
                             RedirectAttributes redirectAttributes) {
+        
+        //특정 필드가 아닌 복합 룰 검증... BeanValidation도 ObjectError를 검증할 수 있으나 기능이 많이 약하고 제약사항이 많다. 자세한 내용은 Item.class 파일 참조
+        if(item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if(resultPrice < 10000) {
+                bindingResult.reject("totalPriceMin", new Object[]{"10,000", resultPrice}, null);
+            }
+        }
 
         //검증에 실패하면 다시 입력 폼으로
         if(bindingResult.hasErrors()) {
