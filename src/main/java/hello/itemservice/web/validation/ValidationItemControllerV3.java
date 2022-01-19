@@ -2,6 +2,8 @@ package hello.itemservice.web.validation;
 
 import hello.itemservice.domain.item.Item;
 import hello.itemservice.domain.item.ItemRepository;
+import hello.itemservice.domain.item.SaveCheck;
+import hello.itemservice.domain.item.UpdateCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -72,11 +74,42 @@ public class ValidationItemControllerV3 {
         price 에 문자 "A" 입력 -> "A"를 숫자 타입 변환 시도 실패 -> typeMismatch FieldError 추가
         -> price 필드는 BeanValidation 적용 X
      */
+
     //@Validated 애노테이션이 있으면 Bean Validation이 자동으로 적용된다. 즉 Item 객체는 Bean Validation을 사용하겠다는 의미이다.
-    @PostMapping("/add")
+    //@PostMapping("/add")
     public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult,
                             RedirectAttributes redirectAttributes) {
         
+        //특정 필드가 아닌 복합 룰 검증... BeanValidation도 ObjectError를 검증할 수 있으나 기능이 많이 약하고 제약사항이 많다. 자세한 내용은 Item.class 파일 참조
+        if(item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if(resultPrice < 10000) {
+                bindingResult.reject("totalPriceMin", new Object[]{"10,000", resultPrice}, null);
+            }
+        }
+
+        //검증에 실패하면 다시 입력 폼으로
+        if(bindingResult.hasErrors()) {
+            log.debug("errors = {}", bindingResult);
+            return "validation/v3/addForm";
+        }
+
+        //성공 로직
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/validation/v3/items/{itemId}";
+    }
+
+    @PostMapping("/add")
+    public String addItem2(@Validated(SaveCheck.class) @ModelAttribute Item item, BindingResult bindingResult,
+                           RedirectAttributes redirectAttributes) {
+        /*
+        - groups 기능 사용에 대해 @Validated(SaveCheck.class)
+        groups 기능을 사용해서 등록과 수정시에 각각 다르게 검증이 가능하다. 그런데 groups 기능을 사용하니 Item은 물론이고 전반적으로 복잡도가 올라갔다.
+        사실 groups 기능은 실제 잘 사용되지는 않는데, 그 이유는 실무에서는 주로 등록용 폼 객체와 수정용 폼 객체를 분리해서 사용하기 때문이다.
+        */
+
         //특정 필드가 아닌 복합 룰 검증... BeanValidation도 ObjectError를 검증할 수 있으나 기능이 많이 약하고 제약사항이 많다. 자세한 내용은 Item.class 파일 참조
         if(item.getPrice() != null && item.getQuantity() != null) {
             int resultPrice = item.getPrice() * item.getQuantity();
@@ -105,8 +138,34 @@ public class ValidationItemControllerV3 {
         return "validation/v3/editForm";
     }
 
-    @PostMapping("/{itemId}/edit")
+    //@PostMapping("/{itemId}/edit")
     public String edit(@PathVariable Long itemId, @Validated @ModelAttribute Item item, BindingResult bindingResult) {
+
+        //특정 필드가 아닌 복합 룰 검증... BeanValidation도 ObjectError를 검증할 수 있으나 기능이 많이 약하고 제약사항이 많다. 자세한 내용은 Item.class 파일 참조
+        if(item.getPrice() != null && item.getQuantity() != null) {
+            int resultPrice = item.getPrice() * item.getQuantity();
+            if(resultPrice < 10000) {
+                bindingResult.reject("totalPriceMin", new Object[]{"10,000", resultPrice}, null);
+            }
+        }
+
+        //검증에 실패하면 다시 입력 폼으로
+        if(bindingResult.hasErrors()) {
+            log.debug("errors = {}", bindingResult);
+            return "validation/v3/editForm";
+        }
+
+        itemRepository.update(itemId, item);
+        return "redirect:/validation/v3/items/{itemId}";
+    }
+
+    @PostMapping("/{itemId}/edit")
+    public String edit2(@PathVariable Long itemId, @Validated(UpdateCheck.class) @ModelAttribute Item item, BindingResult bindingResult) {
+        /*
+        - groups 기능 사용에 대해 @Validated(SaveCheck.class)
+        groups 기능을 사용해서 등록과 수정시에 각각 다르게 검증이 가능하다. 그런데 groups 기능을 사용하니 Item은 물론이고 전반적으로 복잡도가 올라갔다.
+        사실 groups 기능은 실제 잘 사용되지는 않는데, 그 이유는 실무에서는 주로 등록용 폼 객체와 수정용 폼 객체를 분리해서 사용하기 때문이다.
+        */
 
         //특정 필드가 아닌 복합 룰 검증... BeanValidation도 ObjectError를 검증할 수 있으나 기능이 많이 약하고 제약사항이 많다. 자세한 내용은 Item.class 파일 참조
         if(item.getPrice() != null && item.getQuantity() != null) {

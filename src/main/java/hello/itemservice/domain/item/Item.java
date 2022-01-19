@@ -27,18 +27,18 @@ public class Item {
         Level3: (Annotation명).java.lang.String, Integer 타입일 경우 NotBlank.java.lang.Integer
         Level4: (Annotation명)
     */
-    @NotNull
+    @NotNull(groups = UpdateCheck.class)
     private Long id;
 
-    @NotBlank
+    @NotBlank(groups = {UpdateCheck.class, SaveCheck.class})
     private String itemName;
 
-    @NotNull
-    @Range(min = 1000, max = 1000000) //1000~1000000사이의 값만 허용
+    @NotNull(groups = {UpdateCheck.class, SaveCheck.class})
+    @Range(min = 1000, max = 1000000, groups = {UpdateCheck.class, SaveCheck.class}) //1000~1000000사이의 값만 허용
     private Integer price;
 
-    @NotNull
-    //@Max(9999) //수정 요구사항 추가
+    @NotNull(groups = {UpdateCheck.class, SaveCheck.class})
+    @Max(value = 9999, groups = SaveCheck.class) //수정 요구사항 추가
     private Integer quantity;
 
     public Item() {
