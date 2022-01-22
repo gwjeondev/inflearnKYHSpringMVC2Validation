@@ -78,7 +78,7 @@ public class ValidationItemControllerV3 {
     //@Validated 애노테이션이 있으면 Bean Validation이 자동으로 적용된다. 즉 Item 객체는 Bean Validation을 사용하겠다는 의미이다.
     //@PostMapping("/add")
     public String addItem(@Validated @ModelAttribute Item item, BindingResult bindingResult,
-                            RedirectAttributes redirectAttributes) {
+                          RedirectAttributes redirectAttributes) {
         
         //특정 필드가 아닌 복합 룰 검증... BeanValidation도 ObjectError를 검증할 수 있으나 기능이 많이 약하고 제약사항이 많다. 자세한 내용은 Item.class 파일 참조
         if(item.getPrice() != null && item.getQuantity() != null) {

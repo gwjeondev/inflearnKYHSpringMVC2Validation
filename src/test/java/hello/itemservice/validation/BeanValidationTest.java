@@ -1,6 +1,6 @@
 package hello.itemservice.validation;
 
-import hello.itemservice.domain.item.Item;
+import hello.itemservice.domain.item.Item__;
 import org.junit.jupiter.api.Test;
 
 import javax.validation.ConstraintViolation;
@@ -17,14 +17,14 @@ public class BeanValidationTest {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
 
-        Item item = new Item();
+        Item__ item = new Item__();
         item.setItemName(" ");
         item.setPrice(0);
         item.setQuantity(10000);
 
-        Set<ConstraintViolation<Item>> violations = validator.validate(item);
+        Set<ConstraintViolation<Item__>> violations = validator.validate(item);
         //값이 있으면 에러이고 없으면 에러아님.
-        for (ConstraintViolation<Item> violation : violations) {
+        for (ConstraintViolation<Item__> violation : violations) {
             System.out.println("violation = " + violation);
             System.out.println("violation = " + violation.getMessage());
         }
